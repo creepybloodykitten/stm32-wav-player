@@ -1,0 +1,11 @@
+Debug/
+Release/
+build/
+.settings/
+player.ioc
+.mxproject
+.project
+player.launch
+MDK-ARM/
+dr_libs/
+Drivers/
