@@ -3,7 +3,7 @@
 
 #include "fatfs.h"
 
-#define MAX_SONGS 50
+#define MAX_SONGS 100
 
 typedef struct {
     char name[100]; 
@@ -26,6 +26,7 @@ void Player_Prev(void);
 void Player_SetVolume(uint8_t vol_percent);
 uint8_t Player_GetVolume(void);
 void Button_Process(void);
+void Player_HandleHotSwap(void);
 
 
 #endif /* _PLAYER_H_ */

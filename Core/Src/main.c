@@ -171,6 +171,7 @@ int main(void)
       }
 	  Player_Process();
 	  Button_Process();
+	  Player_HandleHotSwap();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

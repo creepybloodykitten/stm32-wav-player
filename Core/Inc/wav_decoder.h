@@ -5,4 +5,6 @@
 
 extern const Decoder wav_decoder;
 
+//int (*open)(FIL* file, AudioInfo* info, const char* filename);
+
 #endif // WAV_DECODER_H

@@ -158,12 +158,33 @@ static bool SD_RxDataBlock(BYTE *buff, UINT len)
     */
     //HAL_SPI_Receive(HSPI_SDCARD, buff, len, SPI_TIMEOUT);
 
+
     for (UINT i = 0; i < len; i++) {
-            while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_TXE));
+		while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_TXE));
+		*(__IO uint8_t *)&hspi1.Instance->DR = 0xFF; // Посылаем dummy byte
+		while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_RXNE));
+		buff[i] = *(__IO uint8_t *)&hspi1.Instance->DR; // Забираем данные
+    }
+
+
+    /*
+    for (UINT i = 0; i < len; i++) {
+            uint32_t timeout = 50000; // Счетчик таймаута (~2 мс)
+
+            // Ждем готовности передатчика, но не вечно
+            while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_TXE) && timeout) timeout--;
+            if (timeout == 0) return FALSE; // Если флешку вырвали - выходим, не зависаем!
+
             *(__IO uint8_t *)&hspi1.Instance->DR = 0xFF; // Посылаем dummy byte
-            while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_RXNE));
-            buff[i] = *(__IO uint8_t *)&hspi1.Instance->DR; // Забираем данные
+
+            timeout = 50000;
+            // Ждем прихода байта, но не вечно
+            while(!__HAL_SPI_GET_FLAG(HSPI_SDCARD, SPI_FLAG_RXNE) && timeout) timeout--;
+            if (timeout == 0) return FALSE; // Спасает от мертвого зависания
+
+            buff[i] = *(__IO uint8_t *)&hspi1.Instance->DR; // Забираем данные быстро!
         }
+    */
 
     /* discard CRC */
     SPI_RxByte();
@@ -558,6 +579,10 @@ DRESULT SD_disk_ioctl(BYTE drv, BYTE ctrl, void *buff)
     }
 
     return res;
+}
+
+void SD_Eject(void) {
+    Stat = STA_NOINIT;
 }
 
 const Diskio_drvTypeDef  SD_Driver =

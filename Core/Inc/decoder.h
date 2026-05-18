@@ -17,7 +17,7 @@ typedef struct {
 typedef struct Decoder {
     const char* name; 
     int (*can_handle)(const char* filename);
-    int (*open)(FIL* file, AudioInfo* info);
+    int (*open)(FIL* file, AudioInfo* info,const char* filename);
     uint32_t (*decode)(void* pcm_buffer, uint32_t bytes_to_decode);
     void (*close)(void);
 } Decoder;

@@ -52,7 +52,7 @@
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-extern uint16_t Timer1, Timer2;
+extern volatile uint16_t Timer1, Timer2;
 
 /* USER CODE END 0 */
 
