@@ -187,6 +187,8 @@ void Player_ExecuteCommand(const char* cmd) {
         LOG_Printf("  info   - Show disk info\r\n");
         LOG_Printf("  list   - List all tracks\r\n");
         LOG_Printf("  play X - Select track number X (e.g., 'play 0')\r\n");
+        LOG_Printf("  next   - Play next track\r\n");
+        LOG_Printf("  prev   - Play previous track\r\n");
         LOG_Printf("  pp     - Pause/Play playback\r\n");
         LOG_Printf("  vol X  - Set volume to X% (e.g., 'vol 50')\r\n");
     }
@@ -200,6 +202,12 @@ void Player_ExecuteCommand(const char* cmd) {
 
         int track_num = atoi(cmd + 5);
         Player_Play(track_num);
+    }
+    else if (strcmp(cmd, "next") == 0) {
+        Player_Next();
+    }
+    else if (strcmp(cmd, "prev") == 0) {
+        Player_Prev();
     }
     else if (strncmp(cmd, "vol ", 4) == 0) {
         int vol = atoi(cmd + 4);
