@@ -137,16 +137,20 @@ int main(void)
   LOG_Init(&huart2);
 	
   HAL_UART_Transmit(&huart2, (uint8_t*)"Attempting to mount SD card...\r\n", 31, HAL_MAX_DELAY);
-  HAL_Delay(500); 
+  HAL_Delay(100);
+
+
   fres = f_mount(&fs, "", 1);
   if (fres == FR_OK)
   {
     LOG_Printf("SUCCESS! SD card mounted successfully.\r\n");
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
   }
   else
   {
     LOG_Printf("ERROR! Failed to mount SD card. FRESULT code: %d\r\n", fres);
-		Error_Handler();
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+	//Error_Handler();
   }
 
 	
@@ -392,6 +396,13 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_SET);
+
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SD_CS_Pin */
   GPIO_InitStruct.Pin = SD_CS_Pin;

@@ -425,8 +425,7 @@ void Player_HandleHotSwap(void) {
                     sd_is_mounted = false;
                     song_count = 0;
 
-                    // Если захочешь внешний светодиод (например на PC4)
-                    // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
                 } else {
                     f_closedir(&dir);
                 }
@@ -458,6 +457,7 @@ void Player_HandleHotSwap(void) {
 			if (res == FR_OK) {
 				LOG_Printf("[SYSTEM] SD Card INSERTED successfully!\r\n");
 				sd_is_mounted = true;
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
 
 				Player_Init();
 				if (song_count > 0) {
@@ -465,10 +465,11 @@ void Player_HandleHotSwap(void) {
 					Player_TogglePause();
 				}
 			} else {
-				// САМОЕ ВАЖНОЕ: Если не получилось, мы увидим КОД ОШИБКИ!
-				LOG_Printf("[SYSTEM] Mount failed! FRESULT code: %d\r\n", res);
 
-				// Чтобы она не спамила каждую секунду, сбросим таймер
+				LOG_Printf("[SYSTEM] Mount failed! FRESULT code: %d\r\n", res);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+
+				//  сбросим таймер
 				last_sd_check = HAL_GetTick();
 			}
         }
