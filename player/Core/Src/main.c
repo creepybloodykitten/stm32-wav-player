@@ -54,6 +54,7 @@ SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_rx;
 DMA_HandleTypeDef hdma_spi1_tx;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -72,10 +73,17 @@ extern int song_count;
 
 //for control by COM
 #define UART_RX_BUFFER_SIZE 64
+//usart2
 uint8_t uart_rx_buffer[UART_RX_BUFFER_SIZE];
 uint8_t uart_rx_byte; 
 int uart_rx_index = 0;
 
+//usart1
+uint8_t uart1_rx_buffer[UART_RX_BUFFER_SIZE];
+uint8_t uart1_rx_byte;
+int uart1_rx_index = 0;
+
+//общий буфер
 volatile bool g_command_ready = false;
 char g_command_buffer[UART_RX_BUFFER_SIZE];
 
@@ -89,6 +97,7 @@ static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2S2_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -132,6 +141,7 @@ int main(void)
   MX_FATFS_Init();
   MX_USART2_UART_Init();
   MX_I2S2_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	
   LOG_Init(&huart2);
@@ -161,6 +171,8 @@ int main(void)
 	    Player_TogglePause();      // И сразу ставим на паузу
 	}
 	HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1);
+
+	HAL_UART_Receive_IT(&huart1, &uart1_rx_byte, 1);
 
   /* USER CODE END 2 */
 
@@ -193,6 +205,14 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
+  /** Macro to configure the PLL multiplication factor
+  */
+  __HAL_RCC_PLL_PLLM_CONFIG(16);
+
+  /** Macro to configure the PLL clock source
+  */
+  __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSI);
+
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
@@ -217,7 +237,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-
 
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
   PeriphClkInitStruct.PLLI2S.PLLI2SM = 16;
@@ -317,6 +336,39 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -380,13 +432,8 @@ static void MX_DMA_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-
   /* USER CODE BEGIN MX_GPIO_Init_1 */
-  //настройка кнопки
-  GPIO_InitStruct.Pin = GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
@@ -397,13 +444,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SD_CS_GPIO_Port, SD_CS_Pin, GPIO_PIN_SET);
 
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
   /*Configure GPIO pin : SD_CS_Pin */
   GPIO_InitStruct.Pin = SD_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -412,30 +452,83 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(SD_CS_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  // Настройка кнопки PC13 (после включения тактирования GPIOC)
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  // Настройка светодиода PC0
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance == USART2) {
-        if (g_command_ready) { 
-            
-            HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1);
-            return;
-        }
 
-        if (uart_rx_byte == '\r' || uart_rx_byte == '\n') {
-            if (uart_rx_index > 0) {
-                uart_rx_buffer[uart_rx_index] = '\0';
-                strcpy(g_command_buffer, (char*)uart_rx_buffer); 
-                g_command_ready = true; 
-                uart_rx_index = 0;
-            }
-        } else if (uart_rx_index < UART_RX_BUFFER_SIZE - 1) {
-            uart_rx_buffer[uart_rx_index++] = uart_rx_byte;
-        }
+	//прием команд от пк
+    if (huart->Instance == USART2) {
+    	if (!g_command_ready) {
+			if (uart_rx_byte == '\r' || uart_rx_byte == '\n') {
+				if (uart_rx_index > 0) {
+					uart_rx_buffer[uart_rx_index] = '\0';
+					strcpy(g_command_buffer, (char*)uart_rx_buffer);
+					g_command_ready = true;
+					uart_rx_index = 0;
+				}
+			} else if (uart_rx_byte == '\b' || uart_rx_byte == 0x7F) {
+				// Обработка Backspace для PuTTY
+				if (uart_rx_index > 0) {
+					uart_rx_index--;
+				}
+			} else if (uart_rx_index < UART_RX_BUFFER_SIZE - 1) {
+				uart_rx_buffer[uart_rx_index++] = uart_rx_byte;
+			}
+    	}
         HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1);
+    }
+
+    //прием команд от esp32
+    else if (huart->Instance == USART1) {
+		if (!g_command_ready) {
+			if (uart1_rx_byte == '\r' || uart1_rx_byte == '\n') {
+				if (uart1_rx_index > 0) {
+					uart1_rx_buffer[uart1_rx_index] = '\0';
+					strcpy(g_command_buffer, (char*)uart1_rx_buffer);
+					g_command_ready = true;
+					uart1_rx_index = 0;
+				}
+			} else if (uart1_rx_byte == '\b' || uart1_rx_byte == 0x7F) {
+				if (uart1_rx_index > 0) {
+					uart1_rx_index--;
+				}
+			} else if (uart1_rx_index < UART_RX_BUFFER_SIZE - 1) {
+				uart1_rx_buffer[uart1_rx_index++] = uart1_rx_byte;
+			}
+		}
+		// Перезапускаем прием следующего байта от ESP32
+		HAL_UART_Receive_IT(&huart1, &uart1_rx_byte, 1);
+	}
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART2) {
+        __HAL_UART_CLEAR_PEFLAG(huart);
+        __HAL_UART_CLEAR_FEFLAG(huart);
+        __HAL_UART_CLEAR_NEFLAG(huart);
+        __HAL_UART_CLEAR_OREFLAG(huart);
+        HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1);
+    } else if (huart->Instance == USART1) {
+        __HAL_UART_CLEAR_PEFLAG(huart);
+        __HAL_UART_CLEAR_FEFLAG(huart);
+        __HAL_UART_CLEAR_NEFLAG(huart);
+        __HAL_UART_CLEAR_OREFLAG(huart);
+        HAL_UART_Receive_IT(&huart1, &uart1_rx_byte, 1);
     }
 }
 
