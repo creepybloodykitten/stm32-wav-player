@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=ru.template.mp3_player_aurora
+Exec=/usr/bin/ru.template.mp3_player_aurora
+Name=STM32 Audio
+Name[ru]=STM32 Плеер
+
+[X-Application]
+# 1. Обязательно даем доступ к сети, иначе Sailjail заблокирует MQTT!
+Permissions=Internet
+OrganizationName=ru.template
+# 2. Здесь был дефис mp3-player-aurora, из-за которого ругался Sailjail. Заменили на "_":
+ApplicationName=mp3_player_aurora
+ExecDBus=/usr/bin/ru.template.mp3_player_aurora

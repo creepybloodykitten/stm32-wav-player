@@ -1,7 +1,9 @@
 secrets.h
+.auroraos-regular-keys/
 Debug/
 Release/
 build/
+*.user
 .settings/
 player.ioc
 .mxproject
